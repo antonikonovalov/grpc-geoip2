@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package geoip2;
+
+service GeoIP {
+  rpc Lookup (IpRequest) returns (GeoInfo) {}
+}
+
+// The request with ip address
+message IpRequest {
+    bytes ip = 1;
+}
+
+// The response message containing the Geo info about current IP address
+message GeoInfo {
+	City city = 1;
+    Continent continent = 2;
+    Country country = 3;
+    Location location = 4;
+    Postal postal = 5;
+    Country registeredCountry = 6;
+    RepresentedCountry representedCountry = 7;
+    repeated Country subdivisions = 8;
+    Traits traits = 9;
+}
+
+// type of City
+message City {
+	uint32 geoNameID = 1;
+    map<string, string> names = 2;
+}
+
+message Continent {
+    string code = 1;
+    uint32 geoNameID = 2;
+    map<string, string> names = 3;
+}
+
+message Country {
+    string isoCode = 1;
+    uint32 geoNameID = 2;
+    map<string, string> names = 3;
+}
+
+message Location {
+    int64 latitude = 1;
+    int64 longitude = 2;
+    uint32 metroCode = 3;
+    string timeZone = 4;
+}
+
+message Postal {
+    string Code = 1;
+}
+
+message RepresentedCountry {
+    string isoCode = 1;
+    uint32 geoNameID = 2;
+    map<string, string> names = 3;
+    string type = 4;
+}
+
+message Traits {
+    bool isAnonymousProxy = 1;
+    bool isSatelliteProvider = 2;
+}
+
+
+/*
+type City struct {
+	City struct {
+		GeoNameID uint              `maxminddb:"geoname_id"`
+		Names     map[string]string `maxminddb:"names"`
+	} `maxminddb:"city"`
+	Continent struct {
+		Code      string            `maxminddb:"code"`
+		GeoNameID uint              `maxminddb:"geoname_id"`
+		Names     map[string]string `maxminddb:"names"`
+	} `maxminddb:"continent"`
+	Country struct {
+		GeoNameID uint              `maxminddb:"geoname_id"`
+		IsoCode   string            `maxminddb:"iso_code"`
+		Names     map[string]string `maxminddb:"names"`
+	} `maxminddb:"country"`
+	Location struct {
+		Latitude  float64 `maxminddb:"latitude"`
+		Longitude float64 `maxminddb:"longitude"`
+		MetroCode uint    `maxminddb:"metro_code"`
+		TimeZone  string  `maxminddb:"time_zone"`
+	} `maxminddb:"location"`
+	Postal struct {
+		Code string `maxminddb:"code"`
+	} `maxminddb:"postal"`
+	RegisteredCountry struct {
+		GeoNameID uint              `maxminddb:"geoname_id"`
+		IsoCode   string            `maxminddb:"iso_code"`
+		Names     map[string]string `maxminddb:"names"`
+	} `maxminddb:"registered_country"`
+	RepresentedCountry struct {
+		GeoNameID uint              `maxminddb:"geoname_id"`
+		IsoCode   string            `maxminddb:"iso_code"`
+		Names     map[string]string `maxminddb:"names"`
+		Type      string            `maxminddb:"type"`
+	} `maxminddb:"represented_country"`
+	Subdivisions []struct {
+		GeoNameID uint              `maxminddb:"geoname_id"`
+		IsoCode   string            `maxminddb:"iso_code"`
+		Names     map[string]string `maxminddb:"names"`
+	} `maxminddb:"subdivisions"`
+	Traits struct {
+		IsAnonymousProxy    bool `maxminddb:"is_anonymous_proxy"`
+		IsSatelliteProvider bool `maxminddb:"is_satellite_provider"`
+	} `maxminddb:"traits"`
+}
+*/
