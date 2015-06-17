@@ -37,7 +37,7 @@ var _ = proto.Marshal
 
 // The request with ip address
 type IpRequest struct {
-	Ip []byte `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
+	Ip string `protobuf:"bytes,1,opt,name=ip" json:"ip,omitempty"`
 }
 
 func (m *IpRequest) Reset()         { *m = IpRequest{} }
