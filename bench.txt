@@ -1,0 +1,58 @@
+//new api set to cache
+antoniko-2:grpc-geoip2 antoniko$ time ./geo-client -ip=99.99.55.8
+
+English city name: Perrysburg
+English subdivision name: Ohio
+Russian country name: Сша
+ISO country code: US
+Time zone: America/New_York
+Coordinates: 41557000, -83627200
+
+real    0m0.079s
+user    0m0.006s
+sys     0m0.016s
+
+//repeat after cache
+antoniko-2:grpc-geoip2 antoniko$ time ./geo-client -ip=99.99.55.8
+
+English city name: Perrysburg
+English subdivision name: Ohio
+Russian country name: Сша
+ISO country code: US
+Time zone: America/New_York
+Coordinates: 41557000, -83627200
+
+real    0m0.008s
+user    0m0.004s
+sys     0m0.004s
+
+//new ip find in db
+antoniko-2:grpc-geoip2 antoniko$ time ./geo-client -ip=101.66.55.11
+
+English city name: Hangzhou
+English subdivision name: Zhejiang Sheng
+Russian country name: Китай
+ISO country code: CN
+Time zone: Asia/Shanghai
+Coordinates: 30293600, 120161400
+
+real    0m0.021s
+user    0m0.005s
+sys     0m0.005s
+//repeat get from cache
+antoniko-2:grpc-geoip2 antoniko$ time ./geo-client -ip=101.66.55.11
+
+English city name: Hangzhou
+English subdivision name: Zhejiang Sheng
+Russian country name: Китай
+ISO country code: CN
+Time zone: Asia/Shanghai
+Coordinates: 30293600, 120161400
+
+real    0m0.010s
+user    0m0.004s
+sys     0m0.004s
+
+
+
+
