@@ -6,6 +6,8 @@ RUN go get github.com/antonikonovalov/grpc-geoip2
 RUN make
 RUN export PATH=$PATH:/gopath/bin
 
+VOLUME ["/db/geoip2"]
+
 EXPOSE 50052
 
 ENTRYPOINT ["/gopath/bin/geoip2-server"]
