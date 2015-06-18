@@ -1,4 +1,4 @@
-all: deps proto build install
+all: deps build install
 
 proto:
 	 @protoc --go_out=plugins=grpc:. geoip2/*.proto
