@@ -1,42 +1,36 @@
-package main
+package client
 
 import (
-	"log"
-
-	pb "github.com/antonikonovalov/grpc-geoip2/geoip2"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"flag"
-	"fmt"
+
+	pb "github.com/antonikonovalov/grpc-geoip2/geoip2"
 )
 
-var (
-	address     = "0.0.0.0:50051"
-	ip = flag.String("ip","81.2.69.142","set ip for lookup")
+const (
+	DefaultAddress = "0.0.0.0:50052"
 )
 
-func main() {
-	flag.Parse()
+type Client struct {
+	grpc pb.GeoIPClient
+	cc   *grpc.ClientConn
+}
+
+func New(address string) (*Client, error) {
+	if len(address) == 0 {
+		address = DefaultAddress
+	}
+	client := new(Client)
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address)
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		return nil, err
 	}
-	defer conn.Close()
-	c := pb.NewGeoIPClient(conn)
+	client.cc = conn
+	client.grpc = pb.NewGeoIPClient(conn)
+	return client, nil
+}
 
-	// Contact the server and print out its response.
-
-
-	r, err := c.Lookup(context.Background(), &pb.IpRequest{Ip: *ip})
-	if err != nil {
-		log.Fatalf("could not find: %v", err)
-	}
-	//log.Printf("Lookuped: %s", r.String())
-	fmt.Printf("\n\nEnglish city name: %v\n", r.City.Names["en"])
-	fmt.Printf("English subdivision name: %v\n", r.Subdivisions[0].Names["en"])
-	fmt.Printf("Russian country name: %v\n", r.Country.Names["ru"])
-	fmt.Printf("ISO country code: %v\n", r.Country.IsoCode)
-	fmt.Printf("Time zone: %v\n", r.Location.TimeZone)
-	fmt.Printf("Coordinates: %v, %v\n", r.Location.Latitude, r.Location.Longitude)
+func (c *Client) Lookup(ip string) (*pb.GeoInfo, error) {
+	return c.grpc.Lookup(context.Background(), &pb.IpRequest{Ip: ip})
 }

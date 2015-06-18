@@ -1,3 +1,5 @@
 .idea
 *.mmdb
 *.db
+geoip2-client
+geoip2-server

@@ -1,70 +1,107 @@
-package main
+package database
 
 import (
+	"fmt"
 	"log"
 	"net"
 
-	"flag"
-	pb "github.com/antonikonovalov/grpc-geoip2/geoip2"
-	"github.com/oschwald/geoip2-golang"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"github.com/golang/protobuf/proto"
 	"github.com/boltdb/bolt"
+	"github.com/golang/protobuf/proto"
+	"github.com/oschwald/geoip2-golang"
+
+	pb "github.com/antonikonovalov/grpc-geoip2/geoip2"
+	"github.com/antonikonovalov/grpc-geoip2/store"
+	"errors"
 )
 
-var (
-	db       *geoip2.Reader
-	cache    *bolt.DB
-	port     = flag.String("port", ":50051", "port for listen service (default - :50051)")
-	pathToDb = flag.String("db", "GeoIP2-City.mmdb", "path to db for lookup data by ip (default - GeoIP2-City.mmdb)")
+const (
+	DefaultPathMmdb  = `/db/geoip2/GeoLite2-City.mmdb`
+	DefaultPathCache = `/db/geoip2/cache.db`
 )
 
-// server is used to implement geoip2.GeoIPServer
-type server struct{}
+func NewStore(mmdbPath, cachePath string) store.Store {
+	var err error
+	store := new(Store)
 
-// Lookup implements geoip2.GeoIPServer
-func (s *server) Lookup(ctx context.Context, in *pb.IpRequest) (*pb.GeoInfo, error) {
+	if len(mmdbPath) == 0 {
+		mmdbPath = DefaultPathMmdb
+	}
+	if len(cachePath) == 0 {
+		cachePath = DefaultPathCache
+	}
+	store.mmdb, err = geoip2.Open(mmdbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	store.cache, err = bolt.Open("cache.db", 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = store.cache.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("ips"))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal("create bucket:", err)
+	}
+
+	return store
+}
+
+type Store struct {
+	mmdb  *geoip2.Reader
+	cache *bolt.DB
+}
+
+func (s *Store) Close() error {
+	//without error
+	s.mmdb.Close()
+	return s.cache.Close()
+}
+
+func (s *Store) Lookup(in *pb.IpRequest) (*pb.GeoInfo,error) {
 	ip := net.ParseIP(in.Ip)
+	if ip == nil {
+		return nil,errors.New("invalid ip")
+	}
 	info := &pb.GeoInfo{}
-	err := cache.View(func(tx *bolt.Tx) error {
+	err := s.cache.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("ips"))
 		v := b.Get([]byte(ip))
 		if len(v) == 0 {
 			return nil
 		}
 		//log.Printf("The answer is: %s\n", v)
-		return proto.Unmarshal(v,info)
+		return proto.Unmarshal(v, info)
 	})
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	if info.GetCountry() != nil {
-		log.Print("return from cache")
-		return info,nil
+		return info, nil
 	}
 
-	record, err := db.City(ip)
+	record, err := s.mmdb.City(ip)
 	if err != nil {
-		log.Print("Error: ", err)
+		fmt.Errorf("Error: %s", err)
 		return nil, err
 	}
 	info = cityToGeoInfo(record)
-	err = cache.Update(func(tx *bolt.Tx) error {
+	err = s.cache.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("ips"))
-		bytes,err := proto.Marshal(info)
+		bytes, err := proto.Marshal(info)
 		if err != nil {
 			return err
 		}
 		err = b.Put([]byte(ip), bytes)
 		return err
 	})
-
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-
-	log.Print("return from db")
 	return info, nil
 }
 
@@ -124,40 +161,4 @@ func cityToGeoInfo(city *geoip2.City) *pb.GeoInfo {
 	}
 
 	return info
-}
-
-func main() {
-	flag.Parse()
-	var err error
-	//max db
-	db, err = geoip2.Open(*pathToDb)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-	//bolt db for cache
-	cache, err = bolt.Open("cache.db", 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cache.Close()
-
-	cache.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("ips"))
-		if err != nil {
-			log.Fatal("create bucket:", err)
-			return err
-		}
-		return nil
-	})
-
-	//tray listen
-	lis, err := net.Listen("tcp", *port)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	pb.RegisterGeoIPServer(s, &server{})
-	log.Print("serve 0.0.0.0" + *port + " db from " + *pathToDb)
-	s.Serve(lis)
 }
