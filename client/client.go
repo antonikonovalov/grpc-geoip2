@@ -16,6 +16,7 @@ type Client struct {
 	cc   *grpc.ClientConn
 }
 
+//create new connection and configure client
 func New(address string) (*Client, error) {
 	if len(address) == 0 {
 		address = DefaultAddress
@@ -33,4 +34,9 @@ func New(address string) (*Client, error) {
 
 func (c *Client) Lookup(ip string) (*pb.GeoInfo, error) {
 	return c.grpc.Lookup(context.Background(), &pb.IpRequest{Ip: ip})
+}
+
+//close connection with server
+func (c *Client) Close() error {
+	return c.cc.Close()
 }
