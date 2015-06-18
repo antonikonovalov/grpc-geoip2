@@ -9,9 +9,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/oschwald/geoip2-golang"
 
+	"errors"
 	pb "github.com/antonikonovalov/grpc-geoip2/geoip2"
 	"github.com/antonikonovalov/grpc-geoip2/store"
-	"errors"
 )
 
 const (
@@ -62,10 +62,10 @@ func (s *Store) Close() error {
 	return s.cache.Close()
 }
 
-func (s *Store) Lookup(in *pb.IpRequest) (*pb.GeoInfo,error) {
+func (s *Store) Lookup(in *pb.IpRequest) (*pb.GeoInfo, error) {
 	ip := net.ParseIP(in.Ip)
 	if ip == nil {
-		return nil,errors.New("invalid ip")
+		return nil, errors.New("invalid ip")
 	}
 	info := &pb.GeoInfo{}
 	err := s.cache.View(func(tx *bolt.Tx) error {

@@ -8,7 +8,6 @@ import (
 
 	pb "github.com/antonikonovalov/grpc-geoip2/geoip2"
 	"github.com/antonikonovalov/grpc-geoip2/store"
-
 )
 
 // server is used to implement geoip2.GeoIPServer
