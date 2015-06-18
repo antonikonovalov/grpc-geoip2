@@ -2,7 +2,7 @@
 
 GeoIP2 like web service with grpc
 
-# install
+# install & run
 
 ## From Source 
 
@@ -16,3 +16,7 @@ GeoIP2 like web service with grpc
     serve 0.0.0.0:50052
     >go run example/client.go -ip=123.23.34.56
 ```
+
+## From Docker
+
+     docker run -P antonikonovalov/grpc-geoip2 
