@@ -22,6 +22,8 @@ It has these top-level messages:
 package geoip2
 
 import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 import (
 	context "golang.org/x/net/context"
@@ -29,11 +31,9 @@ import (
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // The request with ip address
 type IpRequest struct {
@@ -187,7 +187,7 @@ func (m *Location) String() string { return proto.CompactTextString(m) }
 func (*Location) ProtoMessage()    {}
 
 type Postal struct {
-	Code string `protobuf:"bytes,1,opt" json:"Code,omitempty"`
+	Code string `protobuf:"bytes,1,opt,name=Code" json:"Code,omitempty"`
 }
 
 func (m *Postal) Reset()         { *m = Postal{} }
@@ -221,8 +221,9 @@ func (m *Traits) Reset()         { *m = Traits{} }
 func (m *Traits) String() string { return proto.CompactTextString(m) }
 func (*Traits) ProtoMessage()    {}
 
-func init() {
-}
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
 
 // Client API for GeoIP service
 
@@ -257,9 +258,9 @@ func RegisterGeoIPServer(s *grpc.Server, srv GeoIPServer) {
 	s.RegisterService(&_GeoIP_serviceDesc, srv)
 }
 
-func _GeoIP_Lookup_Handler(srv interface{}, ctx context.Context, codec grpc.Codec, buf []byte) (interface{}, error) {
+func _GeoIP_Lookup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error) (interface{}, error) {
 	in := new(IpRequest)
-	if err := codec.Unmarshal(buf, in); err != nil {
+	if err := dec(in); err != nil {
 		return nil, err
 	}
 	out, err := srv.(GeoIPServer).Lookup(ctx, in)
